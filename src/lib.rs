@@ -305,7 +305,7 @@ impl FromStr for Orientation {
 }
 
 /// A tileset, usually the tilesheet image.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct Tileset {
     /// The GID of the first tile stored
     pub first_gid: u32,
@@ -317,7 +317,8 @@ pub struct Tileset {
     /// The Tiled spec says that a tileset can have mutliple images so a `Vec`
     /// is used. Usually you will only use one.
     pub images: Vec<Image>,
-    pub tiles: Vec<Tile>
+    pub tiles: Vec<Tile>,
+    pub properties: Properties,
 }
 
 impl Tileset {
@@ -334,10 +335,15 @@ impl Tileset {
 
         let mut images = Vec::new();
         let mut tiles = Vec::new();
+        let mut properties = HashMap::new();
         parse_tag!(parser, "tileset",
                    "image" => |attrs| {
                         images.push(try!(Image::new(parser, attrs)));
                         Ok(())
+                   },
+                   "properties" => |_| {
+                       properties = try!(parse_properties(parser));
+                       Ok(())
                    },
                    "tile" => |attrs| {
                         tiles.push(try!(Tile::new(parser, attrs)));
@@ -350,13 +356,15 @@ impl Tileset {
                     spacing: s.unwrap_or(0),
                     margin: m.unwrap_or(0),
                     images: images,
-                    tiles: tiles})
+                    tiles: tiles,
+                    properties: properties})
    }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct Tile {
     pub id: u32,
+    pub properties: Properties,
     pub images: Vec<Image>
 }
 
@@ -369,12 +377,18 @@ impl Tile {
             TiledError::MalformedAttributes("tile must have an id with the correct type".to_string()));
 
         let mut images = Vec::new();
+        let mut properties = HashMap::new();
         parse_tag!(parser, "tile",
                    "image" => |attrs| {
-                        images.push(try!(Image::new(parser, attrs)));
-                        Ok(())
-        });
-        Ok(Tile {id: i, images: images})
+                       images.push(try!(Image::new(parser, attrs)));
+                       Ok(())
+                   },
+                   "properties" => |_| {
+                       properties = try!(parse_properties(parser));
+                       Ok(())
+                   }
+        );
+        Ok(Tile {id: i, images: images, properties: properties})
     }
 }
 
