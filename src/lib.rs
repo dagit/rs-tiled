@@ -319,18 +319,20 @@ pub struct Tileset {
     pub images: Vec<Image>,
     pub tiles: Vec<Tile>,
     pub properties: Properties,
+    pub columns: u32,
 }
 
 impl Tileset {
     fn new<R: Read>(parser: &mut EventReader<R>, attrs: Vec<OwnedAttribute>) -> Result<Tileset, TiledError> {
-        let ((s, m), (g, n, w, h)) = get_attrs!(
+        let ((s, m), (g, n, w, h, c)) = get_attrs!(
            attrs,
            optionals: [("spacing", spacing, |v:String| v.parse().ok()),
                        ("margin", margin, |v:String| v.parse().ok())],
            required: [("firstgid", first_gid, |v:String| v.parse().ok()),
                       ("name", name, |v| Some(v)),
                       ("tilewidth", width, |v:String| v.parse().ok()),
-                      ("tileheight", height, |v:String| v.parse().ok())],
+                      ("tileheight", height, |v:String| v.parse().ok()),
+                      ("columns", columns, |v:String| v.parse().ok())],
            TiledError::MalformedAttributes("tileset must have a firstgid, name tile width and height with correct types".to_string()));
 
         let mut images = Vec::new();
@@ -357,6 +359,7 @@ impl Tileset {
                     margin: m.unwrap_or(0),
                     images: images,
                     tiles: tiles,
+                    columns: c,
                     properties: properties})
    }
 }
